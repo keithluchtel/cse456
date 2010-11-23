@@ -1,5 +1,6 @@
 #include "phylip.h"
 #include "seq.h"
+#include "mpi.h"
 
 /* version 3.6. (c) Copyright 1993-2004 by the University of Washington.
    Written by Joseph Felsenstein, Akiko Fuseki, Sean Lamont, and Andrew Keeffe.
@@ -12,6 +13,10 @@ typedef struct valrec {
   double rat, ratxv, z1, y1, z1zz, z1yy, z1xv;
 } valrec;
 
+// MPI variables
+int p, my_rank, tag = 0;
+int num_elems, start_elem, tot_elems;
+MPI_Status status;
 
 Char infilename[FNMLNGTH], outfilename[FNMLNGTH], catfilename[FNMLNGTH], weightfilename[FNMLNGTH];
 long sites, categs, weightsum, datasets, ith, rcategs;
@@ -165,8 +170,9 @@ void getoptions()
     phyFillScreenColor();
 #endif
     fflush(stdout);
-    scanf("%c%*[^\n]", &ch);
-    getchar();
+    //scanf("%c%*[^\n]", &ch);
+	ch = 'Y';
+    //getchar();
     uppercase(&ch);
     if  (ch == 'Y')
            break;
@@ -1192,6 +1198,23 @@ void makev(long m, long n, double *v)
 
 void makedists()
 {
+	// Create variables
+	double *outputs;
+	long x, counter, output_pos = 0;
+
+	// Calculate variables for MPI
+	tot_elems = spp * spp / 2 - spp;
+	num_elems = tot_elems / p;
+	start_elem = my_rank * num_elems;
+
+	// Take care of overflow
+	if (my_rank == p - 1) {
+		num_elems += tot_elems % p;
+	}
+
+	// Set the counter
+	counter = num_elems;
+
   /* compute distance matrix */
   long i, j;
   double v;
@@ -1205,51 +1228,92 @@ void makedists()
     phyFillScreenColor();
 #endif
   }
+
+if (my_rank == 0) {
+	// Allocate the output array
+	outputs = (double*)malloc(sizeof(double) * (num_elems + tot_elems % p));
+
   for (i = 0; i < spp; i++)
     if (similarity)
       d[i][i] = 1.0;
     else
       d[i][i] = 0.0;
+} else {
+	// Allocate the output array
+	outputs = (double*)malloc(sizeof(double) * num_elems);
+}
+
+	// Find the value of i
+	i = 0;
+	x = spp - 1;
+	while (start_elem > x) {
+		i++;
+		x += spp - 1 - i;
+	}
+
+	// Find the value of j
+	j = spp - (x - start_elem);
+	
+
   baddists = false;
-  for (i = 1; i < spp; i++) {
-    if (progress) {
+  for (; counter > 0; i++) {
+    /*if (progress) {
       printf("    ");
       for (j = 0; j < nmlngth; j++)
         putchar(nayme[i - 1][j]);
       printf("   ");
-    }
-    for (j = i + 1; j <= spp; j++) {
-      makev(i, j, &v);
+    }*/
+
+	// Find j
+	if (counter != num_elems) {
+		j = i + 1;
+	}
+    for (; j <= spp; j++) {
+      //makev(i, j, &v);
+	v = 1.0057;
       v = fabs(v);     
       if ( baddists == true ) {
         v = -1;
         baddists = false;
       }
-      d[i - 1][j - 1] = v;
-      d[j - 1][i - 1] = v;
-      if (progress) {
+	outputs[output_pos] = v;
+	output_pos++;
+      //d[i - 1][j - 1] = v;
+      //d[j - 1][i - 1] = v;
+      /*if (progress) {
         putchar('.');
         fflush(stdout);
-      }
+      }*/
+
+	// Decrement the counter
+	counter--;
     }
-    if (progress) {
+    /*if (progress) {
       putchar('\n');
 #ifdef WIN32
       phyFillScreenColor();
 #endif
-    }
+    }*/
   }
-  if (progress) {
+  /*if (progress) {
     printf("    ");
     for (j = 0; j < nmlngth; j++)
       putchar(nayme[spp - 1][j]);
     putchar('\n');
-  }
-  for (i = 0; i < spp; i++) {
+  }*/
+
+	// Testing
+	printf("Process %d\n", my_rank);
+	for (i = 0; i < num_elems; i++) {
+		printf("%f, ", outputs[i]);
+	}
+	printf("\n");
+
+  /*for (i = 0; i < spp; i++) {
     for (j = 0; j < endsite; j++)
       free(nodep[i]->x[j]);
     free(nodep[i]->x);
-  }
+  }*/
 }  /* makedists */
 
 
@@ -1273,9 +1337,16 @@ int main(int argc, Char *argv[])
   argc = 1;                /* macsetup("Dnadist","");        */
   argv[0] = "Dnadist";
 #endif
+
+	// Start MPI
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &p);
+
   init(argc, argv);
-  openfile(&infile,INFILE,"input file","r",argv[0],infilename);
-  openfile(&outfile,OUTFILE,"output file","w",argv[0],outfilename);
+  //openfile(&infile,INFILE,"input file","r",argv[0],infilename);
+  openfile(&infile,INFILE,"//home//cse456//cleach//project//input file","r",argv[0],infilename);
+  openfile(&outfile,OUTFILE,"//home//cse456//cleach//project//output file","w",argv[0],outfilename);
 
   ibmpc = IBMCRT;
   ansi = ANSICRT;
@@ -1307,6 +1378,9 @@ int main(int argc, Char *argv[])
 #ifdef WIN32
   phyRestoreConsoleAttributes();
 #endif
+
+	// Clean up
+	MPI_Finalize();
   return 0;
 }  /* DNA Distances by Maximum Likelihood */
 
