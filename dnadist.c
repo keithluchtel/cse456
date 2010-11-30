@@ -2,6 +2,18 @@
 #include "seq.h"
 #include "mpi.h"
 
+/*
+notes: commented out areas of:
+
+makedist,
+main,
+
+
+
+*/
+
+
+
 /* version 3.6. (c) Copyright 1993-2004 by the University of Washington.
    Written by Joseph Felsenstein, Akiko Fuseki, Sean Lamont, and Andrew Keeffe.
    Permission is granted to copy and use this program provided no fee is
@@ -414,10 +426,15 @@ void doinit()
   /* initializes variables */
 
   inputnumbers(&spp, &sites, &nonodes, 1);
+    
   getoptions();
+  
+  
   if (printdata)
     fprintf(outfile, "%2ld species, %3ld  sites\n", spp, sites);
+  
   allocrest();
+  
 }  /* doinit */
 
 
@@ -1198,15 +1215,19 @@ void makev(long m, long n, double *v)
 
 void makedists()
 {
+
+ //double * tester = (double *) malloc(sizeof(double) * 10);
+
+	printf("in makedist :: Process %d\n", my_rank);
 	// Create variables
 	double *outputs;
 	long x, counter, output_pos = 0;
 
 	// Calculate variables for MPI
-	tot_elems = spp * spp / 2 - spp;
+	tot_elems = (spp * spp - spp) / 2;
 	num_elems = tot_elems / p;
 	start_elem = my_rank * num_elems;
-
+        
 	// Take care of overflow
 	if (my_rank == p - 1) {
 		num_elems += tot_elems % p;
@@ -1214,12 +1235,13 @@ void makedists()
 
 	// Set the counter
 	counter = num_elems;
-
   /* compute distance matrix */
+  
   long i, j;
   double v;
-
+  
   inittable();
+  
   for (i = 0; i < endsite; i++)
     weightrat[i] = weight[i] * rate[category[alias[i] - 1] - 1];
   if (progress) {
@@ -1254,21 +1276,30 @@ if (my_rank == 0) {
 	// Find the value of j
 	j = spp - (x - start_elem);
 	
+  if (my_rank == 0)
+	printf("initial value of count %d %d %d\n", counter, j, spp);  
+
 
   baddists = false;
   for (; counter > 0; i++) {
-    /*if (progress) {
+  // test for loop, remove and uncomment above loop
+  //for(; i < 5; i++) {
+    /* 
+    if (progress) {
       printf("    ");
       for (j = 0; j < nmlngth; j++)
         putchar(nayme[i - 1][j]);
       printf("   ");
-    }*/
-
+    } */
+   
 	// Find j
-	if (counter != num_elems) {
+        // never entering this if to set j
+        // need to fix this to be the proper value.
+    if (counter != num_elems) {
 		j = i + 1;
-	}
-    for (; j <= spp; j++) {
+    }
+    printf("value of j :: %d\n", j);
+    for (; j <= spp && counter > 0; j++) {
       //makev(i, j, &v);
 	v = 1.0057;
       v = fabs(v);     
@@ -1280,35 +1311,41 @@ if (my_rank == 0) {
 	output_pos++;
       //d[i - 1][j - 1] = v;
       //d[j - 1][i - 1] = v;
+     
       /*if (progress) {
         putchar('.');
         fflush(stdout);
       }*/
 
 	// Decrement the counter
+        if (my_rank == 0)
+		printf("decrementing counter :: %d\n", (counter - 1));
 	counter--;
     }
+    
     /*if (progress) {
       putchar('\n');
 #ifdef WIN32
       phyFillScreenColor();
 #endif
     }*/
+  
   }
+  
   /*if (progress) {
     printf("    ");
     for (j = 0; j < nmlngth; j++)
       putchar(nayme[spp - 1][j]);
     putchar('\n');
   }*/
-
+  /*
 	// Testing
 	printf("Process %d\n", my_rank);
 	for (i = 0; i < num_elems; i++) {
 		printf("%f, ", outputs[i]);
 	}
 	printf("\n");
-
+  */
   /*for (i = 0; i < spp; i++) {
     for (j = 0; j < endsite; j++)
       free(nodep[i]->x[j]);
@@ -1338,27 +1375,43 @@ int main(int argc, Char *argv[])
   argv[0] = "Dnadist";
 #endif
 
+
+
+
 	// Start MPI
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &p);
 
+  
+  printf("process %d :: before init\n", my_rank);
   init(argc, argv);
+  printf("process %d :: after init\n", my_rank);
+  
+  MPI_Barrier(MPI_COMM_WORLD);
+  
   //openfile(&infile,INFILE,"input file","r",argv[0],infilename);
+  printf("process %d :: before openfiles\n", my_rank);
   openfile(&infile,INFILE,"//home//cse456//cleach//project//input file","r",argv[0],infilename);
-  openfile(&outfile,OUTFILE,"//home//cse456//cleach//project//output file","w",argv[0],outfilename);
-
+  //openfile(&outfile,OUTFILE,"//home//cse456//cleach//project//output file","w",argv[0],outfilename);
+  printf("process %d :: after openfiles\n", my_rank);
+  
+  MPI_Barrier(MPI_COMM_WORLD);
+  
   ibmpc = IBMCRT;
   ansi = ANSICRT;
   mulsets = false;
   datasets = 1;
   firstset = true;
+  
   doinit();
+  
   ttratio0 = ttratio;
   if (ctgry)
     openfile(&catfile,CATFILE,"categories file","r",argv[0],catfilename);
   if (weights || justwts)
     openfile(&weightfile,WEIGHTFILE,"weights file","r",argv[0],weightfilename);
+  
   for (ith = 1; ith <= datasets; ith++) {
     ttratio = ttratio0;
     getinput();
@@ -1367,18 +1420,24 @@ int main(int argc, Char *argv[])
     if (datasets > 1 && progress)
       printf("Data set # %ld:\n\n",ith);
     makedists();
-    writedists();
+    printf("process %d :: After makedist\n", my_rank);
+   // writedists();
   }
+  /*
+  MPI_Barrier(MPI_COMM_WORLD);	
+
   FClose(infile);
-  FClose(outfile);
+  //FClose(outfile);
 #ifdef MAC
-  fixmacfile(outfilename);
+  //fixmacfile(outfilename);
 #endif
   printf("Done.\n\n");
 #ifdef WIN32
-  phyRestoreConsoleAttributes();
+  //phyRestoreConsoleAttributes();
 #endif
-
+*/
+	// MPI BARRIER
+	MPI_Barrier(MPI_COMM_WORLD);
 	// Clean up
 	MPI_Finalize();
   return 0;
