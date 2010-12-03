@@ -935,14 +935,16 @@ void makev(long m, long n, double *v)
   double basetable[4][4];  /* for quick logdet */
   double basefreq1[4], basefreq2[4];
 
-  p = nodep[m - 1];
-  q = nodep[n - 1];
+  p = nodep[m];
+  q = nodep[n];
+
 
   /* check for overlap between sequences */
+
   overlap = false;
   for(i=0 ; i < sites ; i++){
-    if((strchr("NX?O-",y[m-1][i])==NULL) && 
-       (strchr("NX?O-",y[n-1][i])==NULL)){
+    if((strchr("NX?O-",y[m][i])==NULL) && 
+       (strchr("NX?O-",y[n][i])==NULL)){
       overlap = true;
       break;
     }
@@ -952,7 +954,7 @@ void makev(long m, long n, double *v)
     baddists = true;
     return;
   }
-
+ 
   quick = (!ctgry || categs == 1);
   if (jukes || kimura || logdet || similarity) {
     numerator = 0;
@@ -976,6 +978,7 @@ void makev(long m, long n, double *v)
       }
     }
   }
+
   jukesquick = ((jukes || similarity) && quick);
   kimquick = (kimura && quick);
   logdetquick = (logdet && quick);
@@ -1010,6 +1013,8 @@ void makev(long m, long n, double *v)
            log((4.0 * ((double)numerator / denominator - invarfrac)/
                         (1.0-invarfrac) - 1.0) / 3.0)) - 1.0);
   }
+
+  
   if (kimquick) {
     num1 = 0;
     num2 = 0;
@@ -1086,6 +1091,7 @@ void makev(long m, long n, double *v)
     }
     vv = fracchange * tt;
   }
+  
   if (!(jukesquick || kimquick || logdet)) {
     prod = (double *)Malloc(sites*sizeof(double));
     prod2 = (double *)Malloc(sites*sizeof(double));
@@ -1170,7 +1176,10 @@ void makev(long m, long n, double *v)
     free(prod2);
     free(prod3);
   }
-  if (logdetquick) {  /* compute logdet when no ambiguous nucleotides */
+  
+  
+  if (logdetquick) {   /* compute logdet when no ambiguous nucleotides */
+  
     for (i = 0; i < 4; i++) {
       basefreq1[i] = 0.0;
       basefreq2[i] = 0.0;
@@ -1210,6 +1219,7 @@ void makev(long m, long n, double *v)
     vv = (double)numerator / denominator;
   }
   *v = vv;
+ 
 }  /* makev */
 
 
@@ -1276,9 +1286,6 @@ if (my_rank == 0) {
 	// Find the value of j
 	j = spp - (x - start_elem);
 	
-  if (my_rank == 0)
-	printf("initial value of count %d %d %d\n", counter, j, spp);  
-
 
   baddists = false;
   for (; counter > 0; i++) {
@@ -1299,9 +1306,10 @@ if (my_rank == 0) {
 		j = i + 1;
     }
     printf("value of j :: %d\n", j);
-    for (; j <= spp && counter > 0; j++) {
-      //makev(i, j, &v);
-	v = 1.0057;
+    for (; j < spp && counter > 0; j++) {
+	printf("CALLING MAKEV\n");
+        makev(i, j, &v);
+	//v = 1.0057;
       v = fabs(v);     
       if ( baddists == true ) {
         v = -1;
@@ -1318,8 +1326,8 @@ if (my_rank == 0) {
       }*/
 
 	// Decrement the counter
-        if (my_rank == 0)
-		printf("decrementing counter :: %d\n", (counter - 1));
+        //if (my_rank == 0)
+		//printf("decrementing counter :: %d\n", (counter - 1));
 	counter--;
     }
     
@@ -1338,14 +1346,14 @@ if (my_rank == 0) {
       putchar(nayme[spp - 1][j]);
     putchar('\n');
   }*/
-  /*
+  
 	// Testing
 	printf("Process %d\n", my_rank);
 	for (i = 0; i < num_elems; i++) {
 		printf("%f, ", outputs[i]);
 	}
 	printf("\n");
-  */
+
   /*for (i = 0; i < spp; i++) {
     for (j = 0; j < endsite; j++)
       free(nodep[i]->x[j]);
@@ -1392,7 +1400,7 @@ int main(int argc, Char *argv[])
   
   //openfile(&infile,INFILE,"input file","r",argv[0],infilename);
   printf("process %d :: before openfiles\n", my_rank);
-  openfile(&infile,INFILE,"//home//cse456//cleach//project//input file","r",argv[0],infilename);
+  openfile(&infile,INFILE,"/home/cse456/kluchtel/cse456/project/infile","r",argv[0],infilename);
   //openfile(&outfile,OUTFILE,"//home//cse456//cleach//project//output file","w",argv[0],outfilename);
   printf("process %d :: after openfiles\n", my_rank);
   
@@ -1419,8 +1427,7 @@ int main(int argc, Char *argv[])
       firstset = false;
     if (datasets > 1 && progress)
       printf("Data set # %ld:\n\n",ith);
-    makedists();
-    printf("process %d :: After makedist\n", my_rank);
+      makedists();
    // writedists();
   }
   /*
