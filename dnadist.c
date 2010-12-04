@@ -1229,7 +1229,6 @@ void makedists()
 
  //double * tester = (double *) malloc(sizeof(double) * 10);
 
-	printf("in makedist :: Process %d\n", my_rank);
 	// Create variables
 	long x, counter, output_pos = 0;
 
@@ -1305,9 +1304,7 @@ if (my_rank == 0) {
     if (counter != num_elems) {
 		j = i + 1;
     }
-    printf("value of j :: %d\n", j);
     for (; j < spp && counter > 0; j++) {
-	printf("CALLING MAKEV\n");
         makev(i, j, &v);
 	//v = 1.0057;
       v = fabs(v);     
@@ -1353,11 +1350,11 @@ if (my_rank == 0) {
   }*/
   
 	// Testing
-	printf("Process %d\n", my_rank);
-	for (i = 0; i < num_elems; i++) {
-		printf("%f, ", outputs[i]);
-	}
-	printf("\n");
+//	printf("Process %d\n", my_rank);
+//	for (i = 0; i < num_elems; i++) {
+//		printf("%f, ", outputs[i]);
+//	}
+//	printf("\n");
 
   /*for (i = 0; i < spp; i++) {
     for (j = 0; j < endsite; j++)
@@ -1395,19 +1392,13 @@ int main(int argc, Char *argv[])
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &p);
-
-  
-  printf("process %d :: before init\n", my_rank);
+ 
   init(argc, argv);
-  printf("process %d :: after init\n", my_rank);
   
   MPI_Barrier(MPI_COMM_WORLD);
   
-  //openfile(&infile,INFILE,"input file","r",argv[0],infilename);
-  printf("process %d :: before openfiles\n", my_rank);
+  // open the infile for reading the dna sequences in
   openfile(&infile,INFILE,"/home/cse456/kluchtel/cse456/project/infile","r",argv[0],infilename);
-  //openfile(&outfile,OUTFILE,"//home//cse456//cleach//project//output file","w",argv[0],outfilename);
-  printf("process %d :: after openfiles\n", my_rank);
   
   MPI_Barrier(MPI_COMM_WORLD);
   
