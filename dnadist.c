@@ -28,6 +28,7 @@ typedef struct valrec {
 // MPI variables
 int p, my_rank, tag = 0;
 int num_elems, start_elem, tot_elems;
+double *outputs;
 MPI_Status status;
 
 Char infilename[FNMLNGTH], outfilename[FNMLNGTH], catfilename[FNMLNGTH], weightfilename[FNMLNGTH];
@@ -1230,7 +1231,6 @@ void makedists()
 
 	printf("in makedist :: Process %d\n", my_rank);
 	// Create variables
-	double *outputs;
 	long x, counter, output_pos = 0;
 
 	// Calculate variables for MPI
@@ -1315,8 +1315,13 @@ if (my_rank == 0) {
         v = -1;
         baddists = false;
       }
-	outputs[output_pos] = v;
-	output_pos++;
+	if (my_rank == 0) {
+      		d[i][j] = v;
+      		d[j][i] = v;
+	} else {
+		outputs[output_pos] = v;
+		output_pos++;
+	}
       //d[i - 1][j - 1] = v;
       //d[j - 1][i - 1] = v;
      
@@ -1428,8 +1433,69 @@ int main(int argc, Char *argv[])
     if (datasets > 1 && progress)
       printf("Data set # %ld:\n\n",ith);
       makedists();
-   // writedists();
+
+	// Send and receive the calculations
+        if (my_rank == 0) {
+                // Receive the data from each of the nodes
+                int m,n;
+                int size, counter;
+		long i,j,x;
+                for (m = 1; m < p; m++) {
+                        // Determine the number of elements
+                        if (m == p - 1) {
+                                size = num_elems + tot_elems % p;
+                        } else {
+                                size = num_elems;
+                        }
+
+                        // Receive the data from the given node
+                        MPI_Recv(outputs, size, MPI_DOUBLE, m, 0, MPI_COMM_WORLD, &status);
+
+			// TRANSFER VALUES TO d HERE
+               		counter = size;
+               		start_elem = m * num_elems;
+
+                	// Find the value of i
+                	i = 0;
+                	n = 0;
+               		x = spp - 1;
+                	while (start_elem > x) {
+                        	i++;
+                        	x += spp - 1 - i;
+                	}
+
+                	// Find the value of j
+                	j = spp - (x - start_elem);
+
+                	for (; counter > 0; i++) {
+                        	// Find j
+                        	// never entering this if to set j
+                        	// need to fix this to be the proper value.
+                        	if (counter != size) {
+                                	j = i + 1;
+                        	}
+                        	for (; j < spp && counter > 0; j++) {
+                                	// Save it to d
+                                	d[i][j] = outputs[n];
+                                	d[j][i] = outputs[n];
+                                	n++;
+                                	counter--;
+                        	}
+                	}
+
+                }
+    
+                // Write them to the file
+                openfile(&outfile,OUTFILE,"//home//cse456//cleach//project//output file","w",argv[0],outfilename);
+                writedists();
+  		FClose(outfile);
+
+        } else {
+                // Send the data to the main node
+                MPI_Send(outputs, num_elems, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+        }
   }
+  FClose(infile);
   /*
   MPI_Barrier(MPI_COMM_WORLD);	
 
