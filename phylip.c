@@ -278,10 +278,11 @@ void openfile(FILE **fp,const char *filename,const char *filedesc,
         phyFillScreenColor();
 #endif
         fflush(stdout);
-        if ( fgets(input, sizeof(input), stdin) == NULL )
-          EOF_error();
-        ch  = input[0];
-        uppercase(&ch);
+       // if ( fgets(input, sizeof(input), stdin) == NULL )
+        //  EOF_error();
+        //ch  = input[0];
+        //uppercase(&ch);
+	ch = 'R';
         countup(&loopcount2, 10);
       } while (ch != 'A' && ch != 'R' && ch != 'F' && ch != 'Q');
       if (ch == 'Q')
