@@ -106,6 +106,7 @@ void getoptions()
   interleaved = true;
   loopcount = 0;
   for (;;) {
+    /*
     cleerhome();
     printf("\nNucleic acid sequence Distance Matrix program,");
     printf(" version %s\n\n",VERSION);
@@ -140,6 +141,7 @@ void getoptions()
       else
         printf("  %ld categories\n", categs);
     }
+    
     printf("  W                         Use weights for sites?");
     if (weights)
       printf("  Yes\n");
@@ -149,20 +151,24 @@ void getoptions()
       printf("  F                Use empirical base frequencies?  %s\n",
              (freqsfrom ? "Yes" : "No"));
     printf("  L                       Form of distance matrix?  ");
-    switch (matrix_flags) {
-      case MAT_MACHINE:
-        str = "Square";
-        break;
-      case MAT_LOWERTRI:
-        str = "Lower-triangular";
-        break;
-      case MAT_HUMAN:
-        str = "Human-readable";
-        break;
-      default:  /* shouldn't happen */
-        assert( 0 );
-        str = "(unknown)";
-    }
+    */
+    
+    //switch (matrix_flags) {
+    //  case MAT_MACHINE:
+    //    str = "Square";
+    //    break;
+    //  case MAT_LOWERTRI:
+    //    str = "Lower-triangular";
+    //    break;
+    //  case MAT_HUMAN:
+    //    str = "Human-readable";
+    //    break;
+    //  default:  /* shouldn't happen */
+    //    assert( 0 );
+    //    str = "(unknown)";
+    //}
+
+    /*
     puts(str);
     printf("  M                    Analyze multiple data sets?");
     if (mulsets)
@@ -183,6 +189,7 @@ void getoptions()
     phyFillScreenColor();
 #endif
     fflush(stdout);
+    */
     //scanf("%c%*[^\n]", &ch);
 	ch = 'Y';
     //getchar();
@@ -1254,7 +1261,7 @@ void makedists()
   for (i = 0; i < endsite; i++)
     weightrat[i] = weight[i] * rate[category[alias[i] - 1] - 1];
   if (progress) {
-    printf("Distances calculated for species\n");
+    //printf("Distances calculated for species\n");
 #ifdef WIN32
     phyFillScreenColor();
 #endif
@@ -1385,30 +1392,33 @@ int main(int argc, Char *argv[])
   argv[0] = "Dnadist";
 #endif
 
-
+	/* timing variables */
+	double start_time, end_time;
 
 
 	// Start MPI
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &p);
- 
-  init(argc, argv);
+	
+  	MPI_Barrier(MPI_COMM_WORLD);
+	start_time = MPI_Wtime();	
+
+  	init(argc, argv);
   
-  MPI_Barrier(MPI_COMM_WORLD);
   
   // open the infile for reading the dna sequences in
-  openfile(&infile,INFILE,"/home/cse456/kluchtel/cse456/project/infile","r",argv[0],infilename);
+  	openfile(&infile,INFILE,"/home/cse456/kluchtel/cse456/project/infile","r",argv[0],infilename);
   
-  MPI_Barrier(MPI_COMM_WORLD);
+  	//MPI_Barrier(MPI_COMM_WORLD);
   
-  ibmpc = IBMCRT;
-  ansi = ANSICRT;
-  mulsets = false;
-  datasets = 1;
-  firstset = true;
+  	ibmpc = IBMCRT;
+  	ansi = ANSICRT;
+ 	mulsets = false;
+  	datasets = 1;
+  	firstset = true;
   
-  doinit();
+  	doinit();
   
   ttratio0 = ttratio;
   if (ctgry)
@@ -1502,6 +1512,13 @@ int main(int argc, Char *argv[])
 */
 	// MPI BARRIER
 	MPI_Barrier(MPI_COMM_WORLD);
+	end_time = MPI_Wtime();
+
+	if (my_rank == 0) {
+		printf("Total Time :: %f\n", (end_time - start_time));
+		printf("Start Time :: %f\n", (start_time));
+		printf("End Time   :: %f\n", (end_time));
+	}
 	// Clean up
 	MPI_Finalize();
   return 0;
