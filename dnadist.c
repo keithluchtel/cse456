@@ -1287,7 +1287,7 @@ void makedists()
 	// Find the value of i
 	i = 0;
 	x = spp - 1;
-	while (start_elem > x) {
+	while (start_elem >= x) {
 		i++;
 		x += spp - 1 - i;
 	}
@@ -1436,7 +1436,12 @@ int main(int argc, Char *argv[])
 			firstset = false;
 		if (datasets > 1 && progress)
 			printf("Data set # %ld:\n\n",ith);
+		printf("*** Process %d going into makedists\n", my_rank);
 		makedists();
+
+		printf("*** Process %d at barrier\n", my_rank);
+	   	MPI_Barrier(MPI_COMM_WORLD);	
+		printf("*** Process %d past barrier\n", my_rank);
 
 		// Send and receive the calculations
 		if (my_rank == 0) {
@@ -1453,7 +1458,9 @@ int main(int argc, Char *argv[])
 				}
 
 				// Receive the data from the given node
+				printf("** MPI_Recv from process %d, trying to receive %d elements\n", m, size);
 				MPI_Recv(outputs, size, MPI_DOUBLE, m, 0, MPI_COMM_WORLD, &status);
+				printf("** Done receiving from process %d\n", m);
 
 				// TRANSFER VALUES TO d HERE
 				counter = size;
@@ -1463,7 +1470,7 @@ int main(int argc, Char *argv[])
 				i = 0;
 				n = 0;
 				x = spp - 1;
-				while (start_elem > x) {
+				while (start_elem >= x) {
 					i++;
 					x += spp - 1 - i;
 				}
@@ -1496,7 +1503,9 @@ int main(int argc, Char *argv[])
 
 		} else {
 			// Send the data to the main node
+			printf("* MPI_Send from process %d, sending %d elements\n", my_rank, num_elems);
 			MPI_Send(outputs, num_elems, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+			printf("* Done sending from process %d\n", my_rank);
 		}
 	}
 	FClose(infile);
