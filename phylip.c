@@ -121,7 +121,7 @@ void init(int argc, char** argv)
   ansi = ANSICRT;
 
   /* Clear the screen */
-  cleerhome();
+  //cleerhome();
 
 #ifdef WIN32
   /* Perform DOS console configuration */
