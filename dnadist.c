@@ -1411,7 +1411,7 @@ int main(int argc, Char *argv[])
 
 
 	// open the infile for reading the dna sequences in
-	openfile(&infile,INFILE,"/home/cse456/sanks87/project/phylip-3.69/src/infile","r",argv[0],infilename);
+	openfile(&infile,INFILE,"/work/cse456/kluchtel/project2/infile","r",argv[0],infilename);
 
 	//MPI_Barrier(MPI_COMM_WORLD);
 
@@ -1436,12 +1436,9 @@ int main(int argc, Char *argv[])
 			firstset = false;
 		if (datasets > 1 && progress)
 			printf("Data set # %ld:\n\n",ith);
-		printf("*** Process %d going into makedists\n", my_rank);
 		makedists();
 
-		printf("*** Process %d at barrier\n", my_rank);
 	   	MPI_Barrier(MPI_COMM_WORLD);	
-		printf("*** Process %d past barrier\n", my_rank);
 
 		// Send and receive the calculations
 		if (my_rank == 0) {
@@ -1458,9 +1455,7 @@ int main(int argc, Char *argv[])
 				}
 
 				// Receive the data from the given node
-				printf("** MPI_Recv from process %d, trying to receive %d elements\n", m, size);
 				MPI_Recv(outputs, size, MPI_DOUBLE, m, 0, MPI_COMM_WORLD, &status);
-				printf("** Done receiving from process %d\n", m);
 
 				// TRANSFER VALUES TO d HERE
 				counter = size;
@@ -1497,15 +1492,13 @@ int main(int argc, Char *argv[])
 			}
 
 			// Write them to the file
-			openfile(&outfile,OUTFILE,"/home/cse456/sanks87/project/phylip-3.69/src/outfile","w",argv[0],outfilename);
+			openfile(&outfile,OUTFILE,"/work/cse456/kluchtel/project2/outfile","w",argv[0],outfilename);
 			writedists();
 			FClose(outfile);
 
 		} else {
 			// Send the data to the main node
-			printf("* MPI_Send from process %d, sending %d elements\n", my_rank, num_elems);
 			MPI_Send(outputs, num_elems, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
-			printf("* Done sending from process %d\n", my_rank);
 		}
 	}
 	FClose(infile);

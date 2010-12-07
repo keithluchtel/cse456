@@ -1,5 +1,6 @@
 #include "phylip.h"
 #include "seq.h"
+#include "mpi.h"
 
 /* version 3.6. (c) Copyright 1993-2004 by the University of Washington.
    Written by Joseph Felsenstein, Akiko Fuseki, Sean Lamont, and Andrew Keeffe.
@@ -1269,6 +1270,9 @@ void writedists()
 
 int main(int argc, Char *argv[])
 {  /* DNA Distances by Maximum Likelihood */
+
+	double start_time, end_time;
+	start_time = MPI_Wtime();
 #ifdef MAC
   argc = 1;                /* macsetup("Dnadist","");        */
   argv[0] = "Dnadist";
@@ -1300,6 +1304,11 @@ int main(int argc, Char *argv[])
   }
   FClose(infile);
   FClose(outfile);
+
+	end_time = MPI_Wtime();
+	printf("start time :: %f\n", start_time);
+	printf("end time   :: %f\n", end_time);
+	printf("total time :: %f\n", (end_time - start_time));
 #ifdef MAC
   fixmacfile(outfilename);
 #endif
