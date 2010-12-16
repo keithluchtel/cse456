@@ -1,0 +1,35 @@
+Shankar Lakshmanan, Cody Leach, Keith Luchtel
+CSCE 456
+DNADIST Project
+
+FILES
+	dnadist.c - The source code for the main program, DNADIST.
+	seq.c, seq.h - The source code and header file for the sequence library (part of the Phylip library).
+	phylip.c, phylip.h - The source code and header file for general Phylip functionalities.
+	Makefile - The makefile to compile the program.
+	group7_report.pdf - The written report to accompany the program.
+	maui.job - The maui submission script to run the program.
+	README   - The file you are currently viewing. :)
+
+HOW TO COMPILE
+	On PrairieFire, type the following command:
+		make dnadist
+
+HOW TO RUN
+	Before the program can be ran, the input file needs to be in the same directory as the program. The name
+	of the input file needs to be 'infile'.  On PrairieFire, the program needs to be submitted to the Maui 
+	scheduler. This can be accomplished by typing the following command:
+		qsub maui.job
+
+OUTPUT
+	The output will be put into a file called 'outfile' in the same directory as the program.
+
+HOW TO CHANGE THE NUMBER OF PROCESSES:
+	The number of processes that run the program is specified in the maui.job file. In the maui.job file,
+	there is a line that is similar to the one below:
+		#PBS -l select=X:IB 
+	'X' is the number of processes that will be running the program. For example, if the program is run on 
+	8 processors, then the line in the maui.job file should look like the following:
+		#PBS -l select=8:IB 
+
+
