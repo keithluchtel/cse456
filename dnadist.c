@@ -390,9 +390,11 @@ void allocrest()
 		y[i] = (Char *)Malloc(sites*sizeof(Char));
 		nodep[i] = (node *)Malloc(sizeof(node));
 	}
-	d = (double **)Malloc(spp*sizeof(double *));
-	for (i = 0; i < spp; i++)
-		d[i] = (double*)Malloc(spp*sizeof(double));
+	if (my_rank == 0) {
+		d = (double **)Malloc(spp*sizeof(double *));
+		for (i = 0; i < spp; i++)
+			d[i] = (double*)Malloc(spp*sizeof(double));
+	}
 	nayme = (naym *)Malloc(spp*sizeof(naym));
 	category = (steptr)Malloc(sites*sizeof(long));
 	oldweight = (steptr)Malloc(sites*sizeof(long));
