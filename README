@@ -21,6 +21,10 @@ HOW TO RUN
 	scheduler. This can be accomplished by typing the following command:
 		qsub maui.job
 
+CHECKING THE STATUS OF RUNNING JOB
+	Jobs being ran can be checked using the qstat -u [username]. This will show all running jobs for the username
+	given. (exclude the brackets).
+
 OUTPUT
 	The output will be put into a file called 'outfile' in the same directory as the program.
 
@@ -31,5 +35,9 @@ HOW TO CHANGE THE NUMBER OF PROCESSES:
 	'X' is the number of processes that will be running the program. For example, if the program is run on 
 	8 processors, then the line in the maui.job file should look like the following:
 		#PBS -l select=8:IB 
+
+ERRORS
+	Any errors that may potentially occur will be put within the mpi.stderr file. If something does not run as
+	expected, look within this file to find the cause.
 
 
